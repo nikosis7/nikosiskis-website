@@ -2,6 +2,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Link from "next/link";
+import { Analytics } from "@vercel/analytics/next";
+import CookieConsent from "./components/CookieConsent";
 
 const siteUrl = "https://www.nikosiskis.gr";
 
@@ -175,6 +177,9 @@ export default function RootLayout({
             </div>
           </div>
         </footer>
+
+        <CookieConsent />
+        <Analytics />
       </body>
     </html>
   );
