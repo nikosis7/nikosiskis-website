@@ -76,8 +76,8 @@ export default function HomePage() {
       <section className="contact" id="epikoinonia"><div className="container contact-grid">
         <div><div className="eyebrow">ΕΠΙΚΟΙΝΩΝΙΑ</div><h2>Έχετε ένα έργο<br />στο μυαλό σας;<br /><span>Ας μιλήσουμε.</span></h2></div>
         <div className="contact-copy"><p>Επικοινωνήστε για ΚΕΝΑΚ, ενεργειακά πιστοποιητικά, πυροπροστασία, ΥΔΕ, Η/Μ μελέτες και συστήματα ασφαλείας στη Θεσσαλονίκη και τις γύρω περιοχές.</p>
-          <div className="contact-details"><a href="tel:+306970426048"><b>Τ</b> 697 042 6048</a><a href="mailto:nikosiski@gmail.com"><b>Ε</b> nikosiski@gmail.com</a><span><b>Π</b> Θεσσαλονίκη &amp; ευρύτερη περιοχή</span></div>
-          <a className="button button-primary" href="mailto:nikosiski@gmail.com?subject=Αίτημα%20τεχνικής%20προσφοράς">Ζητήστε τεχνική προσφορά ↗</a>
+          <div className="contact-details"><a href="tel:+306970426048"><b>Τ</b> 697 042 6048</a><a href="mailto:info@nikosiskis.gr"><b>Ε</b> info@nikosiskis.gr</a><span><b>Π</b> Θεσσαλονίκη &amp; ευρύτερη περιοχή</span></div>
+          <a className="button button-primary" href="mailto:info@nikosiskis.gr?subject=Αίτημα%20τεχνικής%20προσφοράς">Ζητήστε τεχνική προσφορά ↗</a>
         </div>
       </div></section>
     </main>
