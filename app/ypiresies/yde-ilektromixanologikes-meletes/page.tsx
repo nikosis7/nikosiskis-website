@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-const siteUrl = "https://nikosiskis.gr";
+const siteUrl = "https://www.nikosiskis.gr";
 const pageUrl = `${siteUrl}/ypiresies/yde-ilektromixanologikes-meletes`;
 
 const title = "ΥΔΕ & Η/Μ Μελέτες";
