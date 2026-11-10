@@ -1,6 +1,7 @@
+
 import type { MetadataRoute } from "next";
 
-const baseUrl = "https://nikosiskis.gr";
+const baseUrl = "https://www.nikosiskis.gr";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [
@@ -11,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/ypiresies/systimata-asfaleias",
     "/ypiresies/ilektrologikes-ergasies",
   ];
+
   return routes.map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
