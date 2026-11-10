@@ -55,7 +55,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     url: siteUrl,
     image: `${siteUrl}/logo-nikos-iskis.png`,
     telephone: "+306970426048",
-    email: "nikosiski@gmail.com",
+    email: "info@nikosiskis.gr",
     description: "Υπηρεσίες ηλεκτρολόγου μηχανικού, ΚΕΝΑΚ, ενεργειακές επιθεωρήσεις, πυροπροστασία, ΥΔΕ, Η/Μ μελέτες και συστήματα ασφαλείας.",
     areaServed: [{ "@type": "City", name: "Θεσσαλονίκη" }, { "@type": "AdministrativeArea", name: "Ευρύτερη περιοχή Θεσσαλονίκης" }],
     address: { "@type": "PostalAddress", addressLocality: "Θεσσαλονίκη", addressCountry: "GR" },
