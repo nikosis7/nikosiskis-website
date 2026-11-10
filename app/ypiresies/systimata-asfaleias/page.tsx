@@ -30,7 +30,7 @@ export default function ServicePage() {
     <section className="service-content"><div className="container" style={{maxWidth:"900px",marginLeft:"auto",marginRight:"auto"}}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(jsonLd).replace(/</g,"\\u003c")}} />
       <h2>Υπηρεσίες {title}</h2><p>Η σωστή επιλογή και χωροθέτηση εξοπλισμού ασφαλείας ξεκινά από την κατανόηση του χώρου, των σημείων πρόσβασης και των απαιτήσεων επιτήρησης. Η λύση προσαρμόζεται στις πραγματικές ανάγκες της εγκατάστασης.</p>
-      <h2 style={{marginTop:35}}>Τι περιλαμβάνει</h2><ul><li>Μελέτη και χωροθέτηση καμερών CCTV</li><li>Εγκατάσταση και ρύθμιση συστημάτων βιντεοεπιτήρησης</li><li>Συστήματα συναγερμού και αισθητήρες</li><li>Τεχνική υποστήριξη και συντήρηση συστημάτων</li></ul>
+      <h2 style={{marginTop:35}}>Τι περιλαμβάνει</h2><ul><li>Μελέτη και χωροθέτηση καμερών CCTV</li><li>Εγκατάσταση και ρύθμιση συστημάτων βιντεοεπιτήρησης</li><li>Τεχνική υποστήριξη και συντήρηση συστημάτων</li></ul>
       <div className="service-cta"><p>Χρειάζεστε cctv & συστήματα ασφαλείας στη Θεσσαλονίκη; Επικοινωνήστε για να συζητήσουμε τις ανάγκες του χώρου σας.</p><Link className="button button-primary" href="/#epikoinonia">Επικοινωνία ↗</Link></div>
     </div></section>
   </main>;

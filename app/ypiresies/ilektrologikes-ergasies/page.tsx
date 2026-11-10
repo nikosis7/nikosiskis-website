@@ -30,7 +30,7 @@ export default function ServicePage() {
     <section className="service-content"><div className="container" style={{maxWidth:"900px",marginLeft:"auto",marginRight:"auto"}}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(jsonLd).replace(/</g,"\\u003c")}} />
       <h2>Υπηρεσίες {title}</h2><p>Κάθε ηλεκτρολογική εργασία ξεκινά με αξιολόγηση της υφιστάμενης εγκατάστασης και των απαιτήσεων του χώρου. Το αντικείμενο και η έκταση των εργασιών καθορίζονται κατόπιν συνεννόησης.</p>
-      <h2 style={{marginTop:35}}>Τι περιλαμβάνει</h2><ul><li>Ηλεκτρολογικές εγκαταστάσεις και αναβαθμίσεις</li><li>Ηλεκτρικοί πίνακες και κυκλώματα</li><li>Εγκαταστάσεις φωτισμού και αυτοματισμών</li><li>Έλεγχος και αποκατάσταση τεχνικών προβλημάτων</li></ul>
+      <h2 style={{marginTop:35}}>Τι περιλαμβάνει</h2><ul><li>Ηλεκτρολογικές εγκαταστάσεις και αναβαθμίσεις</li><li>Ηλεκτρολογικοί πίνακες και κυκλώματα χαμηλής τάσης</li><li>Εγκαταστάσεις φωτισμού και αυτοματισμών</li><li>Έλεγχος και αποκατάσταση τεχνικών προβλημάτων</li></ul>
       <div className="service-cta"><p>Χρειάζεστε ηλεκτρολογικές εργασίες & εγκαταστάσεις στη Θεσσαλονίκη; Επικοινωνήστε για να συζητήσουμε τις ανάγκες του χώρου σας.</p><Link className="button button-primary" href="/#epikoinonia">Επικοινωνία ↗</Link></div>
     </div></section>
   </main>;
