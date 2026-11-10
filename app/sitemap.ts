@@ -1,7 +1,7 @@
 
 import type { MetadataRoute } from "next";
 
-const baseUrl = "https://www.nikosiskis.gr";
+const baseUrl = "https://www.nikosiskis.gr"; 
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [
