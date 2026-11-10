@@ -1,186 +1,408 @@
 
-import type { Metadata, Viewport } from "next";
-import "./globals.css";
-import Link from "next/link";
-import { Analytics } from "@vercel/analytics/next";
-import CookieConsent from "./components/CookieConsent";
+"use client";
 
-const siteUrl = "https://www.nikosiskis.gr";
+import { useEffect, useState } from "react";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: {
-    default: "Νίκος Ισκής | Ηλεκτρολόγος Μηχανικός στη Θεσσαλονίκη",
-    template: "%s | Νίκος Ισκής",
-  },
-  description:
-    "Νίκος Ισκής, MSc Ηλεκτρολόγος Μηχανικός στη Θεσσαλονίκη. ΚΕΝΑΚ, ενεργειακά πιστοποιητικά, μελέτες πυροπροστασίας, ΥΔΕ, Η/Μ μελέτες και συστήματα ασφαλείας.",
-  applicationName: "Νίκος Ισκής – Ηλεκτρολόγος Μηχανικός",
-  alternates: { canonical: "/" },
-  openGraph: {
-    type: "website",
-    locale: "el_GR",
-    url: siteUrl,
-    siteName: "Νίκος Ισκής – Ηλεκτρολόγος Μηχανικός",
-    title: "Νίκος Ισκής | Ηλεκτρολόγος Μηχανικός στη Θεσσαλονίκη",
-    description:
-      "ΚΕΝΑΚ, ενεργειακές επιθεωρήσεις, πυροπροστασία, ΥΔΕ, Η/Μ μελέτες και συστήματα ασφαλείας στη Θεσσαλονίκη.",
-    images: [
-      {
-        url: "/logo-nikos-iskis.png",
-        width: 666,
-        height: 210,
-        alt: "Νίκος Ισκής – Ηλεκτρολόγος Μηχανικός",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Νίκος Ισκής | Ηλεκτρολόγος Μηχανικός",
-    description:
-      "ΚΕΝΑΚ, πυροπροστασία, ΥΔΕ και Η/Μ μελέτες στη Θεσσαλονίκη.",
-    images: ["/logo-nikos-iskis.png"],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-    },
-  },
-  category: "engineering",
-};
+const GA_ID = "G-3J6LVVWWYW";
+const CONSENT_KEY = "nikosiskis-cookie-consent";
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  themeColor: "#061d38",
-};
+type Consent = "accepted" | "rejected";
 
-const navItems = [
-  ["Υπηρεσίες", "/#ypiresies"],
-  ["Σχετικά", "/#sxetika"],
-  ["Εμπειρία", "/#empeiria"],
-];
+declare global {
+  interface Window {
+    dataLayer: unknown[];
+    gtag?: (...args: unknown[]) => void;
+    __gaInitialized?: boolean;
+  }
+}
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "ProfessionalService",
-    name: "Νίκος Ισκής – Ηλεκτρολόγος Μηχανικός",
-    url: siteUrl,
-    image: `${siteUrl}/logo-nikos-iskis.png`,
-    telephone: "+306970426048",
-    email: "info@nikosiskis.gr",
-    description:
-      "Υπηρεσίες ηλεκτρολόγου μηχανικού, ΚΕΝΑΚ, ενεργειακές επιθεωρήσεις, πυροπροστασία, ΥΔΕ, Η/Μ μελέτες και συστήματα ασφαλείας.",
-    areaServed: [
-      { "@type": "City", name: "Θεσσαλονίκη" },
-      {
-        "@type": "AdministrativeArea",
-        name: "Ευρύτερη περιοχή Θεσσαλονίκης",
-      },
-    ],
-    address: {
-      "@type": "PostalAddress",
-      addressLocality: "Θεσσαλονίκη",
-      addressCountry: "GR",
-    },
-    priceRange: "Κατόπιν επικοινωνίας",
-    knowsAbout: [
-      "ΚΕΝΑΚ",
-      "Ενεργειακές επιθεωρήσεις",
-      "Πιστοποιητικά πυροπροστασίας",
-      "ΥΔΕ",
-      "Ηλεκτρομηχανολογικές μελέτες",
-      "CCTV",
-      "Ηλεκτρολογικές εγκαταστάσεις",
-    ],
-  };
+function loadGoogleAnalytics() {
+  window.dataLayer = window.dataLayer || [];
+
+  window.gtag =
+    window.gtag ||
+    function (...args: unknown[]) {
+      window.dataLayer.push(args);
+    };
+
+  if (window.__gaInitialized) {
+    window.gtag("consent", "update", {
+      analytics_storage: "granted",
+    });
+    return;
+  }
+
+  window.gtag("consent", "default", {
+    analytics_storage: "denied",
+    ad_storage: "denied",
+    ad_user_data: "denied",
+    ad_personalization: "denied",
+  });
+
+  window.gtag("consent", "update", {
+    analytics_storage: "granted",
+  });
+
+  window.gtag("js", new Date());
+  window.gtag("config", GA_ID);
+
+  window.__gaInitialized = true;
+
+  if (!document.getElementById("google-analytics-script")) {
+    const script = document.createElement("script");
+    script.id = "google-analytics-script";
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+
+    document.head.appendChild(script);
+  }
+}
+
+function disableGoogleAnalytics() {
+  if (window.gtag) {
+    window.gtag("consent", "update", {
+      analytics_storage: "denied",
+      ad_storage: "denied",
+      ad_user_data: "denied",
+      ad_personalization: "denied",
+    });
+  }
+
+  // Διαγραφή των cookies του Google Analytics.
+  const cookies = document.cookie.split(";");
+
+  const domains = [
+    window.location.hostname,
+    `.${window.location.hostname}`,
+    ".nikosiskis.gr",
+  ];
+
+  cookies.forEach((cookie) => {
+    const name = cookie.split("=")[0].trim();
+
+    if (
+      name.startsWith("_ga") ||
+      name.startsWith("_gid") ||
+      name.startsWith("_gat")
+    ) {
+      domains.forEach((domain) => {
+        document.cookie = `${name}=; Max-Age=0; path=/; domain=${domain}`;
+      });
+
+      document.cookie = `${name}=; Max-Age=0; path=/`;
+    }
+  });
+}
+
+export default function CookieConsent() {
+  const [consent, setConsent] = useState<Consent | null>(null);
+  const [ready, setReady] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(CONSENT_KEY);
+
+    if (saved === "accepted" || saved === "rejected") {
+      setConsent(saved);
+      setAnalyticsEnabled(saved === "accepted");
+    }
+
+    setReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+
+    if (consent === "accepted") {
+      loadGoogleAnalytics();
+    } else if (consent === "rejected") {
+      disableGoogleAnalytics();
+    }
+  }, [consent, ready]);
+
+  function saveConsent(value: Consent) {
+    localStorage.setItem(CONSENT_KEY, value);
+    setConsent(value);
+    setAnalyticsEnabled(value === "accepted");
+    setShowSettings(false);
+  }
+
+  function openSettings() {
+    setAnalyticsEnabled(consent === "accepted");
+    setShowSettings(true);
+  }
+
+  if (!ready) return null;
+
+  const buttonStyle = {
+    border: "1px solid #cbd5e1",
+    borderRadius: "7px",
+    padding: "10px 15px",
+    fontSize: "13px",
+    fontWeight: 600,
+    cursor: "pointer",
+  } as const;
 
   return (
-    <html lang="el">
-      <body>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+    <>
+      {consent === null && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "20px",
+            left: "20px",
+            right: "20px",
+            zIndex: 99999,
+            maxWidth: "720px",
+            margin: "0 auto",
+            padding: "22px",
+            background: "#ffffff",
+            color: "#172033",
+            border: "1px solid #e2e8f0",
+            borderRadius: "12px",
+            boxShadow: "0 8px 35px rgba(0,0,0,0.18)",
+            fontFamily: "Arial, sans-serif",
           }}
-        />
+        >
+          <h3
+            style={{
+              margin: "0 0 10px",
+              fontSize: "17px",
+              fontWeight: 700,
+            }}
+          >
+            Ρυθμίσεις cookies
+          </h3>
 
-        <header className="site-header">
-          <div className="container header-inner">
-            <Link href="/" aria-label="Αρχική σελίδα Νίκος Ισκής">
-              <img
-                className="brand-logo"
-                src="/logo-nikos-iskis.png"
-                alt="Νίκος Ισκής – Ηλεκτρολόγος Μηχανικός"
-                width="666"
-                height="210"
-              />
-            </Link>
+          <p
+            style={{
+              margin: "0 0 18px",
+              fontSize: "14px",
+              lineHeight: 1.6,
+              color: "#475569",
+            }}
+          >
+            Ο ιστότοπος χρησιμοποιεί απαραίτητες τεχνολογίες για τη σωστή
+            λειτουργία του. Με τη συγκατάθεσή σας μπορούμε επίσης να
+            χρησιμοποιήσουμε το Google Analytics για να κατανοούμε καλύτερα
+            την επισκεψιμότητα. Μπορείτε να αποδεχτείτε ή να απορρίψετε
+            τα προαιρετικά cookies.
+          </p>
 
-            <nav className="nav" aria-label="Κύρια πλοήγηση">
-              {navItems.map(([label, href]) => (
-                <Link key={href} href={href}>
-                  {label}
-                </Link>
-              ))}
-              <Link className="nav-cta" href="/#epikoinonia">
-                Επικοινωνία ↗
-              </Link>
-            </nav>
-          </div>
+          {showSettings && (
+            <div
+              style={{
+                padding: "14px",
+                marginBottom: "16px",
+                background: "#f8fafc",
+                borderRadius: "8px",
+              }}
+            >
+              <p style={{ margin: "0 0 12px", fontSize: "14px" }}>
+                <strong>Απαραίτητες τεχνολογίες</strong>
+                <br />
+                <span style={{ color: "#64748b" }}>
+                  Ενεργές πάντα για τη λειτουργία του ιστοτόπου.
+                </span>
+              </p>
 
-          <details className="mobile-nav container">
-            <summary>ΜΕΝΟΥ ☰</summary>
-            <nav aria-label="Κινητή πλοήγηση">
-              {navItems.map(([label, href]) => (
-                <Link key={href} href={href}>
-                  {label}
-                </Link>
-              ))}
-              <Link href="/#epikoinonia">Επικοινωνία</Link>
-            </nav>
-          </details>
-        </header>
-
-        {children}
-
-        <footer className="footer">
-          <div className="container">
-            <div className="footer-top">
-              <Link href="/" aria-label="Αρχική">
-                <img
-                  className="footer-logo"
-                  src="/logo-nikos-iskis.png"
-                  alt="Νίκος Ισκής – Ηλεκτρολόγος Μηχανικός"
-                  width="666"
-                  height="210"
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={analyticsEnabled}
+                  onChange={(e) => setAnalyticsEnabled(e.target.checked)}
                 />
-              </Link>
-              <span>Θεσσαλονίκη &amp; ευρύτερη περιοχή</span>
-              <Link href="/#epikoinonia">ΕΠΙΚΟΙΝΩΝΙΑ ↑</Link>
+                <span>
+                  <strong>Στατιστικά επισκεψιμότητας</strong>
+                  <br />
+                  <span style={{ color: "#64748b" }}>
+                    Google Analytics
+                  </span>
+                </span>
+              </label>
             </div>
+          )}
 
-            <div className="footer-bottom">
-              <span>
-                © {new Date().getFullYear()} Νίκος Ισκής. Με επιφύλαξη παντός
-                δικαιώματος.
-              </span>
-              <span>
-                MSc Ηλεκτρολόγος Μηχανικός · Μελέτη · Εγκατάσταση · Πιστοποίηση
-              </span>
-            </div>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "9px",
+            }}
+          >
+            {!showSettings ? (
+              <>
+                <button
+                  onClick={() => saveConsent("accepted")}
+                  style={{
+                    ...buttonStyle,
+                    background: "#0b3158",
+                    color: "#ffffff",
+                    borderColor: "#0b3158",
+                  }}
+                >
+                  Αποδοχή όλων
+                </button>
+
+                <button
+                  onClick={() => saveConsent("rejected")}
+                  style={{
+                    ...buttonStyle,
+                    background: "#ffffff",
+                    color: "#172033",
+                  }}
+                >
+                  Απόρριψη
+                </button>
+
+                <button
+                  onClick={openSettings}
+                  style={{
+                    ...buttonStyle,
+                    background: "#f1f5f9",
+                    color: "#172033",
+                  }}
+                >
+                  Ρυθμίσεις
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() =>
+                    saveConsent(analyticsEnabled ? "accepted" : "rejected")
+                  }
+                  style={{
+                    ...buttonStyle,
+                    background: "#0b3158",
+                    color: "#ffffff",
+                    borderColor: "#0b3158",
+                  }}
+                >
+                  Αποθήκευση επιλογών
+                </button>
+
+                <button
+                  onClick={() => setShowSettings(false)}
+                  style={{
+                    ...buttonStyle,
+                    background: "#ffffff",
+                    color: "#172033",
+                  }}
+                >
+                  Πίσω
+                </button>
+              </>
+            )}
           </div>
-        </footer>
+        </div>
+      )}
 
-        <CookieConsent />
-        <Analytics />
-      </body>
-    </html>
+      {consent !== null && (
+        <button
+          onClick={openSettings}
+          aria-label="Αλλαγή ρυθμίσεων cookies"
+          style={{
+            position: "fixed",
+            bottom: "15px",
+            left: "15px",
+            zIndex: 99998,
+            background: "#0b3158",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: "7px",
+            padding: "9px 13px",
+            fontSize: "12px",
+            cursor: "pointer",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.15)",
+          }}
+        >
+          Ρυθμίσεις cookies
+        </button>
+      )}
+
+      {showSettings && consent !== null && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "65px",
+            left: "20px",
+            right: "20px",
+            zIndex: 99999,
+            maxWidth: "720px",
+            margin: "0 auto",
+            padding: "22px",
+            background: "#ffffff",
+            color: "#172033",
+            border: "1px solid #e2e8f0",
+            borderRadius: "12px",
+            boxShadow: "0 8px 35px rgba(0,0,0,0.18)",
+            fontFamily: "Arial, sans-serif",
+          }}
+        >
+          <h3 style={{ margin: "0 0 14px", fontSize: "17px" }}>
+            Ρυθμίσεις cookies
+          </h3>
+
+          <p style={{ fontSize: "14px", color: "#475569" }}>
+            Επιλέξτε αν επιθυμείτε τη χρήση του Google Analytics.
+            Οι απαραίτητες τεχνολογίες παραμένουν ενεργές.
+          </p>
+
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              fontSize: "14px",
+              marginBottom: "18px",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={analyticsEnabled}
+              onChange={(e) => setAnalyticsEnabled(e.target.checked)}
+            />
+            Στατιστικά επισκεψιμότητας (Google Analytics)
+          </label>
+
+          <div style={{ display: "flex", gap: "9px", flexWrap: "wrap" }}>
+            <button
+              onClick={() =>
+                saveConsent(analyticsEnabled ? "accepted" : "rejected")
+              }
+              style={{
+                ...buttonStyle,
+                background: "#0b3158",
+                color: "#ffffff",
+                borderColor: "#0b3158",
+              }}
+            >
+              Αποθήκευση επιλογών
+            </button>
+
+            <button
+              onClick={() => setShowSettings(false)}
+              style={{
+                ...buttonStyle,
+                background: "#ffffff",
+                color: "#172033",
+              }}
+            >
+              Κλείσιμο
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
