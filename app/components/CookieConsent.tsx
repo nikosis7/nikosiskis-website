@@ -10,7 +10,7 @@ type Consent = "accepted" | "rejected";
 
 declare global {
   interface Window {
-    dataLayer: unknown[];
+    dataLayer: IArguments[];
     gtag?: (...args: unknown[]) => void;
     __gaInitialized?: boolean;
   }
@@ -21,17 +21,21 @@ function loadGoogleAnalytics() {
 
   window.gtag =
     window.gtag ||
-    function (...args: unknown[]) {
-      window.dataLayer.push(args);
+    function () {
+      window.dataLayer.push(arguments);
     };
 
   if (window.__gaInitialized) {
     window.gtag("consent", "update", {
       analytics_storage: "granted",
+      ad_storage: "denied",
+      ad_user_data: "denied",
+      ad_personalization: "denied",
     });
     return;
   }
 
+  // Default consent: denied
   window.gtag("consent", "default", {
     analytics_storage: "denied",
     ad_storage: "denied",
@@ -39,27 +43,35 @@ function loadGoogleAnalytics() {
     ad_personalization: "denied",
   });
 
+  // Grant analytics consent only after user acceptance
   window.gtag("consent", "update", {
     analytics_storage: "granted",
   });
 
   window.gtag("js", new Date());
+
   window.gtag("config", GA_ID);
 
   window.__gaInitialized = true;
 
   if (!document.getElementById("google-analytics-script")) {
     const script = document.createElement("script");
+
     script.id = "google-analytics-script";
     script.async = true;
     script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+
+    script.onerror = () => {
+      window.__gaInitialized = false;
+      script.remove();
+    };
 
     document.head.appendChild(script);
   }
 }
 
 function disableGoogleAnalytics() {
-  if (window.gtag) {
+  if (typeof window.gtag === "function") {
     window.gtag("consent", "update", {
       analytics_storage: "denied",
       ad_storage: "denied",
@@ -68,340 +80,354 @@ function disableGoogleAnalytics() {
     });
   }
 
-  // Διαγραφή των cookies του Google Analytics.
+  // Remove Google Analytics cookies
   const cookies = document.cookie.split(";");
-
-  const domains = [
-    window.location.hostname,
-    `.${window.location.hostname}`,
-    ".nikosiskis.gr",
-  ];
 
   cookies.forEach((cookie) => {
     const name = cookie.split("=")[0].trim();
 
     if (
       name.startsWith("_ga") ||
-      name.startsWith("_gid") ||
-      name.startsWith("_gat")
+      name === "_gid" ||
+      name === "_gat"
     ) {
-      domains.forEach((domain) => {
-        document.cookie = `${name}=; Max-Age=0; path=/; domain=${domain}`;
-      });
+      document.cookie =
+        `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
 
-      document.cookie = `${name}=; Max-Age=0; path=/`;
+      document.cookie =
+        `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
+
+      document.cookie =
+        `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.nikosiskis.gr`;
     }
   });
 }
 
 export default function CookieConsent() {
+  const [loaded, setLoaded] = useState(false);
   const [consent, setConsent] = useState<Consent | null>(null);
-  const [ready, setReady] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [analyticsEnabled, setAnalyticsEnabled] = useState(false);
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
 
   useEffect(() => {
-    const saved = localStorage.getItem(CONSENT_KEY);
+    const savedConsent = localStorage.getItem(CONSENT_KEY);
 
-    if (saved === "accepted" || saved === "rejected") {
-      setConsent(saved);
-      setAnalyticsEnabled(saved === "accepted");
+    if (savedConsent === "accepted") {
+      setConsent("accepted");
+      setAnalyticsEnabled(true);
+      loadGoogleAnalytics();
+    } else if (savedConsent === "rejected") {
+      setConsent("rejected");
+      setAnalyticsEnabled(false);
     }
 
-    setReady(true);
+    setLoaded(true);
   }, []);
 
-  useEffect(() => {
-    if (!ready) return;
+  function acceptAll() {
+    localStorage.setItem(CONSENT_KEY, "accepted");
 
-    if (consent === "accepted") {
-      loadGoogleAnalytics();
-    } else if (consent === "rejected") {
-      disableGoogleAnalytics();
-    }
-  }, [consent, ready]);
-
-  function saveConsent(value: Consent) {
-    localStorage.setItem(CONSENT_KEY, value);
-    setConsent(value);
-    setAnalyticsEnabled(value === "accepted");
+    setConsent("accepted");
+    setAnalyticsEnabled(true);
     setShowSettings(false);
+
+    loadGoogleAnalytics();
   }
 
-  function openSettings() {
-    setAnalyticsEnabled(consent === "accepted");
-    setShowSettings(true);
+  function rejectAll() {
+    localStorage.setItem(CONSENT_KEY, "rejected");
+
+    setConsent("rejected");
+    setAnalyticsEnabled(false);
+    setShowSettings(false);
+
+    disableGoogleAnalytics();
   }
 
-  if (!ready) return null;
+  function saveSettings() {
+    if (analyticsEnabled) {
+      acceptAll();
+    } else {
+      rejectAll();
+    }
+  }
 
-  const buttonStyle = {
-    border: "1px solid #cbd5e1",
+  if (!loaded) {
+    return null;
+  }
+
+  const buttonStyle: React.CSSProperties = {
+    padding: "11px 17px",
     borderRadius: "7px",
-    padding: "10px 15px",
+    border: "1px solid #d1d5db",
     fontSize: "13px",
     fontWeight: 600,
     cursor: "pointer",
-  } as const;
+  };
+
+  const primaryButton: React.CSSProperties = {
+    ...buttonStyle,
+    background: "#111827",
+    color: "#ffffff",
+    border: "1px solid #111827",
+  };
+
+  const secondaryButton: React.CSSProperties = {
+    ...buttonStyle,
+    background: "#ffffff",
+    color: "#111827",
+  };
 
   return (
     <>
-      {consent === null && (
+      {/* Cookie banner */}
+      {consent === null && !showSettings && (
         <div
           style={{
             position: "fixed",
-            bottom: "20px",
-            left: "20px",
-            right: "20px",
+            bottom: 20,
+            left: 20,
             zIndex: 99999,
-            maxWidth: "720px",
-            margin: "0 auto",
-            padding: "22px",
+            width: "min(420px, calc(100% - 40px))",
             background: "#ffffff",
-            color: "#172033",
-            border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            boxShadow: "0 8px 35px rgba(0,0,0,0.18)",
-            fontFamily: "Arial, sans-serif",
+            color: "#111827",
+            padding: 22,
+            borderRadius: 12,
+            boxShadow: "0 5px 30px rgba(0,0,0,0.18)",
+            border: "1px solid #e5e7eb",
           }}
         >
-          <h3
-            style={{
-              margin: "0 0 10px",
-              fontSize: "17px",
-              fontWeight: 700,
-            }}
-          >
+          <h3 style={{ fontSize: 18, margin: "0 0 10px" }}>
             Ρυθμίσεις cookies
           </h3>
 
           <p
             style={{
-              margin: "0 0 18px",
-              fontSize: "14px",
-              lineHeight: 1.6,
-              color: "#475569",
+              fontSize: 13,
+              lineHeight: 1.65,
+              color: "#4b5563",
+              margin: "0 0 16px",
             }}
           >
-            Ο ιστότοπος χρησιμοποιεί απαραίτητες τεχνολογίες για τη σωστή
-            λειτουργία του. Με τη συγκατάθεσή σας μπορούμε επίσης να
-            χρησιμοποιήσουμε το Google Analytics για να κατανοούμε καλύτερα
-            την επισκεψιμότητα. Μπορείτε να αποδεχτείτε ή να απορρίψετε
-            τα προαιρετικά cookies.
+            Η ιστοσελίδα χρησιμοποιεί απαραίτητες τεχνολογίες
+            για τη σωστή λειτουργία της. Με τη συγκατάθεσή σας,
+            χρησιμοποιούμε επίσης Google Analytics για τη
+            στατιστική ανάλυση της επισκεψιμότητας.
+            Μπορείτε να αποδεχτείτε ή να απορρίψετε τα
+            προαιρετικά cookies.
           </p>
-
-          {showSettings && (
-            <div
-              style={{
-                padding: "14px",
-                marginBottom: "16px",
-                background: "#f8fafc",
-                borderRadius: "8px",
-              }}
-            >
-              <p style={{ margin: "0 0 12px", fontSize: "14px" }}>
-                <strong>Απαραίτητες τεχνολογίες</strong>
-                <br />
-                <span style={{ color: "#64748b" }}>
-                  Ενεργές πάντα για τη λειτουργία του ιστοτόπου.
-                </span>
-              </p>
-
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={analyticsEnabled}
-                  onChange={(e) => setAnalyticsEnabled(e.target.checked)}
-                />
-                <span>
-                  <strong>Στατιστικά επισκεψιμότητας</strong>
-                  <br />
-                  <span style={{ color: "#64748b" }}>
-                    Google Analytics
-                  </span>
-                </span>
-              </label>
-            </div>
-          )}
 
           <div
             style={{
               display: "flex",
               flexWrap: "wrap",
-              gap: "9px",
+              gap: 8,
             }}
           >
-            {!showSettings ? (
-              <>
-                <button
-                  onClick={() => saveConsent("accepted")}
-                  style={{
-                    ...buttonStyle,
-                    background: "#0b3158",
-                    color: "#ffffff",
-                    borderColor: "#0b3158",
-                  }}
-                >
-                  Αποδοχή όλων
-                </button>
+            <button
+              onClick={acceptAll}
+              style={primaryButton}
+            >
+              Αποδοχή όλων
+            </button>
 
-                <button
-                  onClick={() => saveConsent("rejected")}
-                  style={{
-                    ...buttonStyle,
-                    background: "#ffffff",
-                    color: "#172033",
-                  }}
-                >
-                  Απόρριψη
-                </button>
+            <button
+              onClick={rejectAll}
+              style={secondaryButton}
+            >
+              Απόρριψη
+            </button>
 
-                <button
-                  onClick={openSettings}
-                  style={{
-                    ...buttonStyle,
-                    background: "#f1f5f9",
-                    color: "#172033",
-                  }}
-                >
-                  Ρυθμίσεις
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() =>
-                    saveConsent(analyticsEnabled ? "accepted" : "rejected")
-                  }
-                  style={{
-                    ...buttonStyle,
-                    background: "#0b3158",
-                    color: "#ffffff",
-                    borderColor: "#0b3158",
-                  }}
-                >
-                  Αποθήκευση επιλογών
-                </button>
-
-                <button
-                  onClick={() => setShowSettings(false)}
-                  style={{
-                    ...buttonStyle,
-                    background: "#ffffff",
-                    color: "#172033",
-                  }}
-                >
-                  Πίσω
-                </button>
-              </>
-            )}
+            <button
+              onClick={() => setShowSettings(true)}
+              style={secondaryButton}
+            >
+              Ρυθμίσεις
+            </button>
           </div>
         </div>
       )}
 
-      {consent !== null && (
-        <button
-          onClick={openSettings}
-          aria-label="Αλλαγή ρυθμίσεων cookies"
-          style={{
-            position: "fixed",
-            bottom: "15px",
-            left: "15px",
-            zIndex: 99998,
-            background: "#0b3158",
-            color: "#ffffff",
-            border: "none",
-            borderRadius: "7px",
-            padding: "9px 13px",
-            fontSize: "12px",
-            cursor: "pointer",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.15)",
-          }}
-        >
-          Ρυθμίσεις cookies
-        </button>
-      )}
-
-      {showSettings && consent !== null && (
+      {/* Settings modal */}
+      {showSettings && (
         <div
           style={{
             position: "fixed",
-            bottom: "65px",
-            left: "20px",
-            right: "20px",
-            zIndex: 99999,
-            maxWidth: "720px",
-            margin: "0 auto",
-            padding: "22px",
-            background: "#ffffff",
-            color: "#172033",
-            border: "1px solid #e2e8f0",
-            borderRadius: "12px",
-            boxShadow: "0 8px 35px rgba(0,0,0,0.18)",
-            fontFamily: "Arial, sans-serif",
+            inset: 0,
+            zIndex: 100000,
+            background: "rgba(0,0,0,0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 20,
           }}
         >
-          <h3 style={{ margin: "0 0 14px", fontSize: "17px" }}>
-            Ρυθμίσεις cookies
-          </h3>
-
-          <p style={{ fontSize: "14px", color: "#475569" }}>
-            Επιλέξτε αν επιθυμείτε τη χρήση του Google Analytics.
-            Οι απαραίτητες τεχνολογίες παραμένουν ενεργές.
-          </p>
-
-          <label
+          <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              fontSize: "14px",
-              marginBottom: "18px",
+              width: "100%",
+              maxWidth: 440,
+              background: "#ffffff",
+              color: "#111827",
+              padding: 24,
+              borderRadius: 12,
+              boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
             }}
           >
-            <input
-              type="checkbox"
-              checked={analyticsEnabled}
-              onChange={(e) => setAnalyticsEnabled(e.target.checked)}
-            />
-            Στατιστικά επισκεψιμότητας (Google Analytics)
-          </label>
+            <h3 style={{ fontSize: 19, margin: "0 0 12px" }}>
+              Προτιμήσεις cookies
+            </h3>
 
-          <div style={{ display: "flex", gap: "9px", flexWrap: "wrap" }}>
-            <button
-              onClick={() =>
-                saveConsent(analyticsEnabled ? "accepted" : "rejected")
-              }
+            <p
               style={{
-                ...buttonStyle,
-                background: "#0b3158",
-                color: "#ffffff",
-                borderColor: "#0b3158",
+                fontSize: 13,
+                lineHeight: 1.6,
+                color: "#4b5563",
+                marginBottom: 20,
               }}
             >
-              Αποθήκευση επιλογών
-            </button>
+              Επιλέξτε ποιες προαιρετικές τεχνολογίες
+              επιθυμείτε να επιτρέψετε.
+            </p>
 
-            <button
-              onClick={() => setShowSettings(false)}
+            <div
               style={{
-                ...buttonStyle,
-                background: "#ffffff",
-                color: "#172033",
+                padding: 14,
+                border: "1px solid #e5e7eb",
+                borderRadius: 8,
+                marginBottom: 12,
               }}
             >
-              Κλείσιμο
-            </button>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>
+                Απαραίτητα cookies
+              </div>
+
+              <p
+                style={{
+                  fontSize: 12,
+                  color: "#6b7280",
+                  margin: "6px 0 0",
+                }}
+              >
+                Απαιτούνται για τη βασική λειτουργία
+                της ιστοσελίδας.
+              </p>
+
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "#15803d",
+                  marginTop: 8,
+                  fontWeight: 600,
+                }}
+              >
+                Πάντα ενεργά
+              </div>
+            </div>
+
+            <label
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 12,
+                padding: 14,
+                border: "1px solid #e5e7eb",
+                borderRadius: 8,
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={analyticsEnabled}
+                onChange={(e) =>
+                  setAnalyticsEnabled(e.target.checked)
+                }
+                style={{
+                  width: 17,
+                  height: 17,
+                  marginTop: 2,
+                  cursor: "pointer",
+                }}
+              />
+
+              <span>
+                <span
+                  style={{
+                    display: "block",
+                    fontSize: 14,
+                    fontWeight: 600,
+                  }}
+                >
+                  Google Analytics
+                </span>
+
+                <span
+                  style={{
+                    display: "block",
+                    fontSize: 12,
+                    color: "#6b7280",
+                    marginTop: 5,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Χρήση στατιστικών δεδομένων για την
+                  ανάλυση της επισκεψιμότητας.
+                </span>
+              </span>
+            </label>
+
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 8,
+                marginTop: 20,
+              }}
+            >
+              <button
+                onClick={saveSettings}
+                style={primaryButton}
+              >
+                Αποθήκευση επιλογών
+              </button>
+
+              <button
+                onClick={() => setShowSettings(false)}
+                style={secondaryButton}
+              >
+                Κλείσιμο
+              </button>
+            </div>
           </div>
         </div>
+      )}
+
+      {/* Reopen cookie settings */}
+      {consent !== null && !showSettings && (
+        <button
+          onClick={() => {
+            setAnalyticsEnabled(consent === "accepted");
+            setShowSettings(true);
+          }}
+          aria-label="Ρυθμίσεις cookies"
+          title="Ρυθμίσεις cookies"
+          style={{
+            position: "fixed",
+            bottom: 16,
+            left: 16,
+            zIndex: 99998,
+            width: 42,
+            height: 42,
+            borderRadius: "50%",
+            border: "1px solid #d1d5db",
+            background: "#ffffff",
+            color: "#111827",
+            fontSize: 19,
+            cursor: "pointer",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.12)",
+          }}
+        >
+          ⚙
+        </button>
       )}
     </>
   );
